@@ -1,6 +1,6 @@
 ﻿namespace ThrPresetsApi.Tests.Infrastructure;
 
-public abstract class BaseTest(ApiFactory factory) : IAsyncDisposable
+public abstract class BaseTest(ApiFactory factory)
 {
     protected readonly ApiFactory Factory = factory;
     protected readonly HttpClient Client = factory.CreateClient();

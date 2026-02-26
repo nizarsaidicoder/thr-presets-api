@@ -373,10 +373,10 @@ Using JetBrains HTTP client (`.http` files) with inline assertions.
 - [x] Configuration extensions (Auth, CORS, Database, JSON, Swagger, Services)
 - [x] Endpoint extensions (.IsPublic(), .RequireAuth())
 - [x] Vertical slices architecture setup
+- [x] Users module (service + endpoints + DTOs)
 
 
 ### 🔜 Up Next
-- [ ] Users module (service + endpoints + DTOs)
 - [ ] Presets module (service + endpoints + DTOs + S3 integration)
 - [ ] Tags module (service + endpoints + seed data)
 - [ ] Ratings module (service + endpoints + Wilson score)

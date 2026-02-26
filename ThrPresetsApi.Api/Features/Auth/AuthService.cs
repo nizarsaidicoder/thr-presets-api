@@ -62,12 +62,11 @@ public class AuthService(AppDbContext db, TokenService tokenService)
     private AuthResponseDto BuildAuthResponse(User user) => new()
     {
         AccessToken = tokenService.GenerateAccessToken(user),
-        User = new UserDto
-        {
-            Id = user.Id,
-            Email = user.Email,
-            Username = user.Username,
-            AvatarUrl = user.AvatarUrl,
-        }
+        User = new UserDto(
+            user.Id,
+            user.Username,
+            user.AvatarUrl,
+            user.CreatedAt
+        )
     };
 }
