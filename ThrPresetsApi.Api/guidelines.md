@@ -374,14 +374,8 @@ Using JetBrains HTTP client (`.http` files) with inline assertions.
 - [x] Endpoint extensions (.IsPublic(), .RequireAuth())
 - [x] Vertical slices architecture setup
 
-### 🚨 Critical Fixes Needed
-- [ ] **Implement AddValidation() extension method** or remove the call from Program.cs
-- [ ] **Map AuthEndpoints in Program.cs** — add `app.MapAuthEndpoints();` before `app.RunAsync()`
-- [ ] **Configure FluentValidation** or remove the package if using DataAnnotations only
-- [ ] **Create appsettings.Development.json** with proper configuration (JWT secret, DB connection, etc.)
 
 ### 🔜 Up Next
-- [ ] Auth `.http` test suite (21 tests as mentioned in docs)
 - [ ] Users module (service + endpoints + DTOs)
 - [ ] Presets module (service + endpoints + DTOs + S3 integration)
 - [ ] Tags module (service + endpoints + seed data)

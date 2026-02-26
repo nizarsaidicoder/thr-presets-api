@@ -26,3 +26,5 @@ app.UseAuthorization();
 app.MapAuthEndpoints();
 
 await app.RunAsync();
+
+public partial class Program { }
