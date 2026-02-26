@@ -1,0 +1,360 @@
+﻿### ── Variables ────────────────────────────────────────────────────────────────
+@baseUrl = http://localhost:5149
+@contentType = application/json
+
+### ── Auth ─────────────────────────────────────────────────────────────────────
+
+### [1] Sign Up - valid → expect 201 + access token
+POST {{baseUrl}}/api/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "test@example.com",
+  "username": "testuser",
+  "password": "Test1234!"
+}
+
+> {%
+    client.test("Status is 201", function() {
+        client.assert(response.status === 201, "Expected 201, got " + response.status);
+    });
+    client.test("Access token is present", function() {
+        client.assert(response.body.accessToken !== null, "Expected access token");
+    });
+    client.test("User email matches", function() {
+        client.assert(response.body.user.email === "test@example.com", "Email mismatch");
+    });
+    client.test("User username matches", function() {
+        client.assert(response.body.user.username === "testuser", "Username mismatch");
+    });
+    client.test("Password is not exposed", function() {
+        client.assert(response.body.user.passwordHash === undefined, "Password hash should not be exposed");
+    });
+    client.global.set("accessToken", response.body.accessToken);
+%}
+
+###
+
+### [2] Sign Up - duplicate email → expect 409
+POST {{baseUrl}}/api/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "test@example.com",
+  "username": "testuser2",
+  "password": "Test1234!"
+}
+
+> {%
+    client.test("Status is 409 on duplicate email", function() {
+        client.assert(response.status === 409, "Expected 409, got " + response.status);
+    });
+%}
+
+###
+
+### [3] Sign Up - duplicate username → expect 400
+POST {{baseUrl}}/api/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "other@example.com",
+  "username": "testuser",
+  "password": "Test1234!"
+}
+
+> {%
+    client.test("Status is 409 on duplicate username", function() {
+        client.assert(response.status === 409, "Expected 409, got " + response.status);
+    });
+%}
+
+###
+
+### [4] Sign Up - invalid email → expect 400
+POST {{baseUrl}}/api/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "not-an-email",
+  "username": "testuser3",
+  "password": "Test1234!"
+}
+
+> {%
+    client.test("Status is 400 on invalid email", function() {
+        client.assert(response.status === 400, "Expected 400, got " + response.status);
+    });
+%}
+
+###
+
+### [5] Sign Up - password too short → expect 400
+POST {{baseUrl}}/api/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "test4@example.com",
+  "username": "testuser4",
+  "password": "123"
+}
+
+> {%
+    client.test("Status is 400 on short password", function() {
+        client.assert(response.status === 400, "Expected 400, got " + response.status);
+    });
+%}
+
+###
+
+### [6] Sign Up - invalid username (special chars) → expect 400
+POST {{baseUrl}}/api/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "test5@example.com",
+  "username": "test user!",
+  "password": "Test1234!"
+}
+
+> {%
+    client.test("Status is 400 on invalid username", function() {
+        client.assert(response.status === 400, "Expected 400, got " + response.status);
+    });
+%}
+
+###
+
+### [7] Sign Up - empty body → expect 400
+POST {{baseUrl}}/api/auth/signup
+Content-Type: {{contentType}}
+
+{}
+
+> {%
+    client.test("Status is 400 on empty body", function() {
+        client.assert(response.status === 400, "Expected 400, got " + response.status);
+    });
+%}
+
+###
+
+### [8] Sign In - valid → expect 200 + access token
+# @name signin
+POST {{baseUrl}}/api/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "test@example.com",
+  "password": "Test1234!"
+}
+
+> {%
+    client.test("Status is 200", function() {
+        client.assert(response.status === 200, "Expected 200, got " + response.status);
+    });
+    client.global.set("accessToken", response.body.accessToken);
+    // manually extract and store refresh token from Set-Cookie header
+    var setCookie = response.headers["Set-Cookie"];
+    if (setCookie) {
+        var match = setCookie.match(/refresh_token=([^;]+)/);
+        if (match) client.global.set("refreshToken", match[1]);
+    }
+%}
+
+###
+
+### [9] Sign In - wrong password → expect 400
+POST {{baseUrl}}/api/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "test@example.com",
+  "password": "wrongpassword"
+}
+
+> {%
+    client.test("Status is 400 on wrong password", function() {
+        client.assert(response.status === 400, "Expected 400, got " + response.status);
+    });
+%}
+
+###
+
+### [10] Sign In - unknown email → expect 400
+POST {{baseUrl}}/api/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "unknown@example.com",
+  "password": "Test1234!"
+}
+
+> {%
+    client.test("Status is 400 on unknown email", function() {
+        client.assert(response.status === 400, "Expected 400, got " + response.status);
+    });
+%}
+
+###
+
+### [11] Sign In - empty body → expect 400
+POST {{baseUrl}}/api/auth/signin
+Content-Type: {{contentType}}
+
+{}
+
+> {%
+    client.test("Status is 400 on empty body", function() {
+        client.assert(response.status === 400, "Expected 400, got " + response.status);
+    });
+%}
+
+###
+
+### [12] Refresh - valid cookie → expect 200 + new access token
+POST {{baseUrl}}/api/auth/refresh
+
+> {%
+    client.test("Status is 200", function() {
+        client.assert(response.status === 200, "Expected 200, got " + response.status);
+    });
+    client.test("New access token is present", function() {
+        client.assert(response.body.accessToken !== null, "Expected new access token");
+    });
+    client.global.set("accessToken", response.body.accessToken);
+%}
+
+###
+
+
+### [13] Logout → expect 204
+POST {{baseUrl}}/api/auth/logout
+Authorization: Bearer {{accessToken}}
+
+> {%
+    client.test("Status is 204", function() {
+        client.assert(response.status === 204, "Expected 204, got " + response.status);
+    });
+%}
+
+###
+
+### [14] Refresh - after logout, cookie cleared → expect 400
+POST {{baseUrl}}/api/auth/refresh
+
+> {%
+    client.test("Status is 400 after logout", function() {
+        client.assert(response.status === 400, "Expected 400, got " + response.status);
+    });
+%}
+
+
+### [15] Sign Up - username too short → expect 400
+POST {{baseUrl}}/api/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "test6@example.com",
+  "username": "ab",
+  "password": "Test1234!"
+}
+
+> {%
+    client.test("Status is 400 on username too short", function() {
+        client.assert(response.status === 400, "Expected 400, got " + response.status);
+    });
+%}
+
+###
+
+### [16] Sign Up - username too long → expect 400
+POST {{baseUrl}}/api/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "test7@example.com",
+  "username": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "password": "Test1234!"
+}
+
+> {%
+    client.test("Status is 400 on username too long", function() {
+        client.assert(response.status === 400, "Expected 400, got " + response.status);
+    });
+%}
+
+###
+
+### [17] Sign Up - password too long → expect 400
+POST {{baseUrl}}/api/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "test8@example.com",
+  "username": "testuser8",
+  "password": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}
+
+> {%
+    client.test("Status is 400 on password too long", function() {
+        client.assert(response.status === 400, "Expected 400, got " + response.status);
+    });
+%}
+
+###
+
+### [18] Sign In - empty email → expect 400
+POST {{baseUrl}}/api/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "",
+  "password": "Test1234!"
+}
+
+> {%
+    client.test("Status is 400 on empty email", function() {
+        client.assert(response.status === 400, "Expected 400, got " + response.status);
+    });
+%}
+
+###
+
+### [19] Sign In - empty password → expect 400
+POST {{baseUrl}}/api/auth/signin
+Content-Type: {{contentType}}
+
+{
+  "email": "test@example.com",
+  "password": ""
+}
+
+> {%
+    client.test("Status is 400 on empty password", function() {
+        client.assert(response.status === 400, "Expected 400, got " + response.status);
+    });
+%}
+
+###
+
+### [20] Refresh - tampered token → expect 400
+POST {{baseUrl}}/api/auth/refresh
+Cookie: refresh_token=this.is.a.tampered.token
+
+> {%
+    client.test("Status is 400 on tampered token", function() {
+        client.assert(response.status === 400, "Expected 400, got " + response.status);
+    });
+%}
+
+###
+
+### [21] Logout when already logged out → expect 401
+POST {{baseUrl}}/api/auth/logout
+
+> {%
+    client.test("Status is 401 on already logged out", function() {
+        client.assert(response.status === 401, "Expected 401, got " + response.status);
+    });
+%}

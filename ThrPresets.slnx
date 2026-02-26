@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="ThrPresetsApi.Tests/ThrPresetsApi.Tests.csproj" />
+  <Project Path="ThrPresetsApi.Api/ThrPresetsApi.Api.csproj" />
+</Solution>
